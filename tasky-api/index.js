@@ -1,6 +1,14 @@
 import express from 'express';
 import Task from './taskModel';
-
+import asyncHandler from 'express-async-handler';
+const errHandler = (err, req, res, next) => {
+    /* if the error in development then send stack trace to display whole error,
+    if it's in production then just send error message  */
+    if(process.env.NODE_ENV === 'production') {
+      return res.status(500).send(`Something went wrong!`);
+    }
+    res.status(500).send(`Hey!! You caught the error 👍👍. Here's the details: ${err.stack} `);
+  };
 const router = express.Router(); // eslint-disable-line
 
 // Get all tasks
@@ -39,4 +47,10 @@ router.delete('/:id', async (req, res) => {
         res.status(404).json({ code: 404, msg: 'Unable to find Task' });
     }
 });
+// create a task
+router.post('/', asyncHandler(async (req, res) => {
+    const task = await Task(req.body).save();
+    res.status(201).json(task);
+}));
+router.use(errHandler);
 export default router;
