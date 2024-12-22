@@ -3,6 +3,8 @@ import Task from './api/tasks/taskModel.js'; // Fixed the path
 import asyncHandler from 'express-async-handler';
 import usersRouter from './api/users/index.js'; // Ensure the path is correct
 import './db'; // Database initialization
+// other imports
+import cors from 'cors';
 const app = express();
 
 // Middleware to parse JSON requests
@@ -21,7 +23,8 @@ app.use('/api/tasks', asyncHandler(async (req, res) => {
     const tasks = await Task.find(); // Fetch tasks from the database
     res.status(200).json(tasks);
 }));
-
+// Enable CORS for all requests
+app.use(cors());
 // User routes
 app.use('/api/users', usersRouter);
 
