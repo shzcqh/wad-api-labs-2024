@@ -1,56 +1,42 @@
 import express from 'express';
-import Task from './taskModel';
+import Task from './api/tasks/taskModel.js'; // Fixed the path
 import asyncHandler from 'express-async-handler';
+import usersRouter from './api/users/index.js'; // Ensure the path is correct
+import './db'; // Database initialization
+const app = express();
+
+// Middleware to parse JSON requests
+app.use(express.json());
+
+// Error handling middleware
 const errHandler = (err, req, res, next) => {
-    /* if the error in development then send stack trace to display whole error,
-    if it's in production then just send error message  */
-    if(process.env.NODE_ENV === 'production') {
-      return res.status(500).send(`Something went wrong!`);
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(500).send('Something went wrong!');
     }
-    res.status(500).send(`Hey!! You caught the error 👍👍. Here's the details: ${err.stack} `);
-  };
-const router = express.Router(); // eslint-disable-line
+    res.status(500).send(`Hey!! You caught the error 👍👍. Here's the details: ${err.stack}`);
+};
 
-// Get all tasks
-router.get('/', async (req, res) => {
-    const tasks = await Task.find();
+// Task routes
+app.use('/api/tasks', asyncHandler(async (req, res) => {
+    const tasks = await Task.find(); // Fetch tasks from the database
     res.status(200).json(tasks);
-});
-
-// create a task
-router.post('/', async (req, res) => {
-    const task = await Task(req.body).save();
-    res.status(201).json(task);
-});
-// Update Task
-router.put('/:id', async (req, res) => {
-    if (req.body._id) delete req.body._id;
-    const result = await Task.updateOne({
-        _id: req.params.id,
-    }, req.body);
-    if (result.matchedCount) {
-        res.status(200).json({ code:200, msg: 'Task Updated Successfully' });
-    } else {
-        res.status(404).json({ code: 404, msg: 'Unable to find Task' });
-    }
-});
-
-// delete Task
-router.delete('/:id', async (req, res) => {
-    if (req.body._id) delete req.body._id;
-    const result = await Task.deleteOne({
-        _id: req.params.id,
-    });
-    if (result.deletedCount) {
-        res.status(204).json();
-    } else {
-        res.status(404).json({ code: 404, msg: 'Unable to find Task' });
-    }
-});
-// create a task
-router.post('/', asyncHandler(async (req, res) => {
-    const task = await Task(req.body).save();
-    res.status(201).json(task);
 }));
-router.use(errHandler);
-export default router;
+
+// User routes
+app.use('/api/users', usersRouter);
+
+// Root route
+app.get('/', (req, res) => {
+    res.send('Welcome to the API');
+});
+
+// Register error handling middleware
+app.use(errHandler);
+
+// Start the server
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+});
+
+export default app;
